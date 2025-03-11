@@ -1,10 +1,19 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import TelaLogin from './src/app/login';
+import TelaCadastro from '@/app/cadastro';
+import TelaPerfil from '@/app/perfil';
+import TelaHome from '@/app';
+import TelaSobre from '@/app/sobre-nos';
 
 export default function App() {
   return (
     <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
+      {/* <TelaHome/> */}
+      {/* <TelaLogin /> */}
+      {/* <TelaCadastro /> */}
+      {/* <TelaPerfil/> */}
+      <TelaSobre/>
       <StatusBar style="auto" />
     </View>
   );
