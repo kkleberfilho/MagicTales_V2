@@ -1,40 +1,37 @@
-import React from 'react';
-import {View,Text,TouchableOpacity,StyleSheet,ImageBackground,ScrollView,} from 'react-native';
+import { View, Text, TouchableOpacity, ImageBackground, StyleSheet } from 'react-native';
+import { Link } from 'expo-router';
 
-export default function TelaHome() {
+export default function HomeScreen() {
   return (
-    <ImageBackground
+    <ImageBackground 
       source={require('@/assets/background2.jpg')} 
       style={styles.background}
-      resizeMode="cover" 
+      resizeMode="cover"
     >
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.content}>
-          
-          <Text style={styles.appName}>MagicTales</Text>
+      <View style={styles.container}>
+        <View style={styles.formContainer} >
 
+          <Text style={styles.title}>MagicTales</Text>
           
-          <Text style={styles.descricao}>
-            Bem-vindo ao MagicTales! Aqui você pode explorar histórias incríveis,
-            conectar-se com outros usuários e criar suas próprias aventuras.
-          </Text>
-
+          <Link href="/login" asChild>
+            <TouchableOpacity style={styles.button}>
+              <Text style={styles.buttonText}>Login</Text>
+            </TouchableOpacity>
+          </Link>
           
-          <TouchableOpacity style={styles.botao} onPress={() => {}}>
-            <Text style={styles.botaoTexto}>Entrar</Text>
-          </TouchableOpacity>
-
+          <Link href="/cadastro" asChild>
+            <TouchableOpacity style={styles.button}>
+              <Text style={styles.buttonText}>Cadastro</Text>
+            </TouchableOpacity>
+          </Link>
           
-          <TouchableOpacity style={styles.botao} onPress={() => {}}>
-            <Text style={styles.botaoTexto}>Cadastro</Text>
-          </TouchableOpacity>
-
-          
-          <TouchableOpacity style={styles.botao} onPress={() => {}}>
-            <Text style={styles.botaoTexto}>Sobre-Nós</Text>
-          </TouchableOpacity>
+          <Link href="/sobre-nos" asChild>
+            <TouchableOpacity style={styles.button}>
+              <Text style={styles.buttonText}>Sobre Nós</Text>
+            </TouchableOpacity>
+          </Link>
         </View>
-      </ScrollView>
+      </View>
     </ImageBackground>
   );
 }
@@ -45,15 +42,15 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  scrollContainer: {
-    flexGrow: 1,
+  container: {
+    width: '100%',
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
   },
-  content: {
-    width: '90%',
-    maxWidth: 400,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+  formContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 10,
     padding: 20,
     shadowColor: '#000',
@@ -62,31 +59,24 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 5,
   },
-  appName: {
-    fontSize: 28,
+  title: {
+    fontSize: 32,
     fontWeight: 'bold',
     color: '#6200ee',
+    marginBottom: 40,
     textAlign: 'center',
-    marginBottom: 20,
   },
-  descricao: {
-    fontSize: 16,
-    color: '#333',
-    textAlign: 'center',
-    marginBottom: 30,
-  },
-  botao: {
-    width: '100%',
-    height: 50,
+  button: {
     backgroundColor: '#6200ee',
+    padding: 15,
     borderRadius: 5,
-    justifyContent: 'center',
+    width: 200,
     alignItems: 'center',
-    marginBottom: 15,
+    marginVertical: 10,
   },
-  botaoTexto: {
-    fontSize: 18,
+  buttonText: {
+    color: 'white',
     fontWeight: 'bold',
-    color: '#fff',
+    fontSize: 16,
   },
 });

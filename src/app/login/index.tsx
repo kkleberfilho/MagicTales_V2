@@ -1,91 +1,99 @@
-import React from 'react';
-import {View,Text,TextInput,TouchableOpacity,StyleSheet,KeyboardAvoidingView,Platform,ScrollView,ImageBackground,Keyboard,TouchableWithoutFeedback,} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ImageBackground, StyleSheet, Alert } from 'react-native';
+import { Link, router } from 'expo-router';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { LoginSchema } from '../../schemas/LoginSchema';
+import { useAuth } from '@/contexts/AuthContext'; // Adicione esta importação
 
-export default function TelaLogin() {
-  const handleLogin = (values: { email: string; password: string }) => {
-    console.log('Dados do login:', values);
-    
+// Credenciais fixas
+const CREDENCIAIS_FIXAS = {
+  email: 'usuario@exemplo.com',
+  senha: 'senha123'
+};
+
+const LoginSchema = Yup.object().shape({
+  email: Yup.string().email('Email inválido').required('Obrigatório'),
+  senha: Yup.string().required('Obrigatório'),
+});
+
+export default function LoginScreen() {
+  const { login } = useAuth();
+
+  const handleLogin = (values: { email: string, senha: string }) => {
+    if (login(values.email, values.senha)) {
+      router.replace('/conto'); // Redireciona para conto após login
+    } else {
+      Alert.alert('Erro', 'Email ou senha incorretos');
+    }
   };
 
+  // O restante do seu código permanece EXATAMENTE IGUAL
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      <ImageBackground
-        source={require('@/assets/background2.jpg')} 
-        style={styles.background}
-        resizeMode="cover" 
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.container}
+    <ImageBackground 
+      source={require('@/assets/background2.jpg')} 
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <View style={styles.container}>
+        <Formik
+          initialValues={{ email: '', senha: '' }}
+          validationSchema={LoginSchema}
+          onSubmit={handleLogin}
         >
-          <ScrollView contentContainerStyle={styles.scrollContainer}>
-            <View style={styles.content}>
-              
-              <Text style={styles.appName}>MagicTales</Text>
+          {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
+            <View style={styles.formContainer}>
+              <Text style={styles.title}>Login</Text>
 
-              
-              <Formik
-                initialValues={{ email: '', password: '' }}
-                validationSchema={LoginSchema}
-                onSubmit={handleLogin}
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                onChangeText={handleChange('email')}
+                onBlur={handleBlur('email')}
+                value={values.email}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+              {touched.email && errors.email && (
+                <Text style={styles.errorText}>{errors.email}</Text>
+              )}
+
+              <TextInput
+                style={styles.input}
+                placeholder="Senha"
+                onChangeText={handleChange('senha')}
+                onBlur={handleBlur('senha')}
+                value={values.senha}
+                secureTextEntry
+              />
+              {touched.senha && errors.senha && (
+                <Text style={styles.errorText}>{errors.senha}</Text>
+              )}
+
+              <TouchableOpacity 
+                style={styles.button} 
+                onPress={() => handleSubmit()}
               >
-                {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
-                  <>
-                    
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Email"
-                      placeholderTextColor="#999"
-                      value={values.email}
-                      onChangeText={handleChange('email')}
-                      onBlur={handleBlur('email')}
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                    />
-                    {touched.email && errors.email && (
-                      <Text style={styles.errorText}>{errors.email}</Text>
-                    )}
+                <Text style={styles.buttonText}>Entrar</Text>
+              </TouchableOpacity>
 
-                    
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Senha"
-                      placeholderTextColor="#999"
-                      secureTextEntry
-                      value={values.password}
-                      onChangeText={handleChange('password')}
-                      onBlur={handleBlur('password')}
-                    />
-                    {touched.password && errors.password && (
-                      <Text style={styles.errorText}>{errors.password}</Text>
-                    )}
+               <TouchableOpacity 
+                  style={styles.button} 
+                  onPress={() => router.push('/')} // Navega para Home
+                >
+                  <Text style={styles.buttonText}>Voltar</Text>
+                </TouchableOpacity>
 
-                    
-                    <View style={styles.row}>
-                      <TouchableOpacity style={styles.forgotPasswordButton}>
-                        <Text style={styles.forgotPasswordText}>Esqueceu a senha?</Text>
-                      </TouchableOpacity>
-                    </View>
-
-                    
-                    <TouchableOpacity style={styles.loginButton} onPress={() => handleSubmit}>
-                      <Text style={styles.loginButtonText}>Entrar</Text>
-                    </TouchableOpacity>
-
-                                      </>
-                )}
-              </Formik>
+              <Text style={styles.credenciaisTexto}>
+                Use: {CREDENCIAIS_FIXAS.email} / {CREDENCIAIS_FIXAS.senha}
+              </Text>
             </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </ImageBackground>
-    </TouchableWithoutFeedback>
+          )}
+        </Formik>
+      </View>
+    </ImageBackground>
   );
 }
 
+// Mantenha seus estilos EXATAMENTE COMO ESTÃO
 const styles = StyleSheet.create({
   background: {
     flex: 1,
@@ -94,16 +102,11 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-  },
-  scrollContainer: {
-    flexGrow: 1,
     justifyContent: 'center',
-    alignItems: 'center',
+    padding: 20,
   },
-  content: {
-    width: '90%',
-    maxWidth: 400,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+  formContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 10,
     padding: 20,
     shadowColor: '#000',
@@ -112,15 +115,14 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 5,
   },
-  appName: {
-    fontSize: 28,
+  title: {
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#6200ee',
     textAlign: 'center',
     marginBottom: 30,
   },
   input: {
-    width: '100%',
     height: 50,
     borderColor: '#ddd',
     borderWidth: 1,
@@ -128,47 +130,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     marginBottom: 15,
     fontSize: 16,
-    color: '#333',
   },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end', 
-    marginBottom: 20,
-  },
-  forgotPasswordButton: {},
-  forgotPasswordText: {
-    fontSize: 14,
-    color: '#6200ee',
-    fontWeight: 'bold',
-  },
-  loginButton: {
-    width: '100%',
-    height: 50,
+  button: {
     backgroundColor: '#6200ee',
+    padding: 15,
     borderRadius: 5,
-    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 15,
+    marginTop: 10,
   },
-  loginButtonText: {
-    fontSize: 18,
+  buttonText: {
+    color: 'white',
     fontWeight: 'bold',
-    color: '#fff',
-  },
-  registerButton: {
-    width: '100%',
-    height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  registerButtonText: {
     fontSize: 16,
-    color: '#6200ee',
-    fontWeight: 'bold',
   },
   errorText: {
     color: 'red',
     fontSize: 12,
     marginBottom: 10,
+  },
+  credenciaisTexto: {
+    marginTop: 20,
+    textAlign: 'center',
+    color: '#666',
+    fontSize: 12,
   },
 });

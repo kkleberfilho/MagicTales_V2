@@ -1,252 +1,266 @@
 import React, { useState } from 'react';
-import {View,Text,TextInput,TouchableOpacity, StyleSheet,KeyboardAvoidingView,Platform,ScrollView,ImageBackground,Keyboard,TouchableWithoutFeedback,Image} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ImageBackground, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { PerfilSchema } from '@/schemas/PerfilSchema';
+import { Redirect } from 'expo-router';
+import { useAuth } from '@/contexts/AuthContext';
+import { Ionicons } from '@expo/vector-icons';
 
+const PerfilSchema = Yup.object().shape({
+  username: Yup.string().required('Obrigatório'),
+  email: Yup.string().email('Email inválido').required('Obrigatório'),
+});
 
-export default function TelaPerfil() {
-    const [editando, setEditando] = useState(false); 
-  
-    const handleSalvar = (values: {
-      username: string;
-      dataNascimento: string;
-      genero: string;
-      emailOuTelefone: string;
-      senha: string;
-    }) => {
-      console.log('Dados do perfil:', values);
-      setEditando(false); 
-    };
-  
+export default function PerfilScreen() {
+  const [editando, setEditando] = useState(false);
+  const { isAuthenticated, user, logout } = useAuth();
+
+  // Dados fictícios baseados no schema de cadastro
+  const dadosFicticios = {
+    nomeCompleto: "Ana Silva",
+    telefone: "(11) 98765-4321",
+    dataNascimento: "15/05/1990",
+    cpf: "123.456.789-00",
+    endereco: {
+      rua: "Rua das Flores, 123",
+      bairro: "Jardim Primavera",
+      cidade: "São Paulo",
+      estado: "SP",
+      cep: "01234-567"
+    }
+  };
+
+  if (isAuthenticated === false) {
+    return <Redirect href="/login" />;
+  }
+
+  if (isAuthenticated === null) {
     return (
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-        <ImageBackground
-          source={require('@/assets/background2.jpg')} 
-          style={styles.background}
-          resizeMode="cover" 
-        >
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.container}
-          >
-            <ScrollView contentContainerStyle={styles.scrollContainer}>
-              <View style={styles.content}>
-                <View style={styles.perfilHeader}>
-                  <View style={styles.fotoContainer}>
-                    <Image
-                      source={require('@/assets/perfil.png')} 
-                      style={styles.fotoPerfil}
-                    />
-                  </View>
-                  <Text style={styles.nomeUsuario}>João Silva</Text>
-                  <Text style={styles.membroDesde}>Membro desde 2023</Text>
-                </View>
-  
-                <Formik
-                  initialValues={{
-                    username: 'João Silva', 
-                    dataNascimento: '01/01/1990', 
-                    genero: 'Masculino', 
-                    emailOuTelefone: 'joao.silva@example.com', 
-                    senha: '********', 
-                  }}
-                  validationSchema={PerfilSchema} 
-                  onSubmit={handleSalvar} 
-                >
-                  {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
-                    <>
-                    
-                      <TextInput
-                        style={styles.input}
-                        placeholder="Nome de usuário"
-                        placeholderTextColor="#999"
-                        value={values.username}
-                        onChangeText={handleChange('username')}
-                        onBlur={handleBlur('username')}
-                        editable={editando} 
-                      />
-                      {touched.username && errors.username && (
-                        <Text style={styles.errorText}>{errors.username}</Text>
-                      )}
-  
-                     
-                      <TextInput
-                        style={styles.input}
-                        placeholder="Data de nascimento"
-                        placeholderTextColor="#999"
-                        value={values.dataNascimento}
-                        onChangeText={handleChange('dataNascimento')}
-                        onBlur={handleBlur('dataNascimento')}
-                        editable={editando} 
-                      />
-                      {touched.dataNascimento && errors.dataNascimento && (
-                        <Text style={styles.errorText}>{errors.dataNascimento}</Text>
-                      )}
-  
-                      
-                      <TextInput
-                        style={styles.input}
-                        placeholder="Gênero"
-                        placeholderTextColor="#999"
-                        value={values.genero}
-                        onChangeText={handleChange('genero')}
-                        onBlur={handleBlur('genero')}
-                        editable={editando} 
-                      />
-                      {touched.genero && errors.genero && (
-                        <Text style={styles.errorText}>{errors.genero}</Text>
-                      )}
-  
-                      
-                      <TextInput
-                        style={styles.input}
-                        placeholder="Email ou telefone"
-                        placeholderTextColor="#999"
-                        value={values.emailOuTelefone}
-                        onChangeText={handleChange('emailOuTelefone')}
-                        onBlur={handleBlur('emailOuTelefone')}
-                        editable={editando} 
-                      />
-                      {touched.emailOuTelefone && errors.emailOuTelefone && (
-                        <Text style={styles.errorText}>{errors.emailOuTelefone}</Text>
-                      )}
-  
-                      
-                      <TextInput
-                        style={styles.input}
-                        placeholder="Senha"
-                        placeholderTextColor="#999"
-                        secureTextEntry
-                        value={values.senha}
-                        onChangeText={handleChange('senha')}
-                        onBlur={handleBlur('senha')}
-                        editable={editando} 
-                      />
-                      {touched.senha && errors.senha && (
-                        <Text style={styles.errorText}>{errors.senha}</Text>
-                      )}
-  
-                    
-                      <View style={styles.botoesContainer}>
-                        {editando ? (
-                          <TouchableOpacity style={styles.botaoSalvar} onPress={() => handleSubmit}>
-                            <Text style={styles.botaoTexto}>Salvar</Text>
-                          </TouchableOpacity>
-                        ) : (
-                          <TouchableOpacity
-                            style={styles.botaoEditar}
-                            onPress={() => setEditando(true)}
-                          >
-                            <Text style={styles.botaoTexto}>Editar</Text>
-                          </TouchableOpacity>
-                        )}
-                      </View>
-                    </>
-                  )}
-                </Formik>
-              </View>
-            </ScrollView>
-          </KeyboardAvoidingView>
-        </ImageBackground>
-      </TouchableWithoutFeedback>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" />
+      </View>
     );
   }
-  
-  const styles = StyleSheet.create({
-    background: {
-      flex: 1,
-      width: '100%',
-      height: '100%',
-    },
-    container: {
-      flex: 1,
-    },
-    scrollContainer: {
-      flexGrow: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    content: {
-      width: '90%',
-      maxWidth: 400,
-      backgroundColor: 'rgba(255, 255, 255, 0.9)', 
-      borderRadius: 10,
-      padding: 20,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 10,
-      elevation: 5,
-    },
-    perfilHeader: {
-      alignItems: 'center',
-      marginBottom: 30,
-    },
-    fotoContainer: {
-      width: 110, 
-      height: 110,
-      borderRadius: 55, 
-      borderWidth: 3, 
-      borderColor: '#6200ee', 
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginBottom: 10,
-    },
-    fotoPerfil: {
-      width: 100, 
-      height: 100,
-      borderRadius: 50, 
-    },
-    nomeUsuario: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      color: '#6200ee',
-    },
-    membroDesde: {
-      fontSize: 14,
-      color: '#666',
-    },
-    input: {
-      width: '100%',
-      height: 50,
-      borderColor: '#ddd',
-      borderWidth: 1,
-      borderRadius: 5,
-      paddingHorizontal: 15,
-      marginBottom: 15,
-      fontSize: 16,
-      color: '#333',
-    },
-    botoesContainer: {
-      flexDirection: 'row',
-      justifyContent: 'center',
-      marginTop: 20,
-    },
-    botaoEditar: {
-      width: '100%',
-      height: 50,
-      backgroundColor: '#6200ee',
-      borderRadius: 5,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    botaoSalvar: {
-      width: '100%',
-      height: 50,
-      backgroundColor: '#4CAF50', 
-      borderRadius: 5,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    botaoTexto: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: '#fff',
-    },
-    errorText: {
-      color: 'red',
-      fontSize: 12,
-      marginBottom: 10,
-    },
-  });
+
+  return (
+    <ImageBackground 
+      source={require('@/assets/background2.jpg')} 
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.content}>
+          <Formik
+            initialValues={{
+              username: user?.email.split('@')[0] || 'Usuário',
+              email: user?.email || '',
+            }}
+            validationSchema={PerfilSchema}
+            onSubmit={(values) => {
+              console.log('Dados atualizados:', values);
+              setEditando(false);
+            }}
+          >
+            {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
+              <>
+                {/* Cabeçalho do Perfil */}
+                <View style={styles.perfilHeader}>
+                  <View style={styles.fotoContainer}>
+                    <View style={styles.avatar}>
+                      <Ionicons name="person" size={50} color="#6200ee" />
+                    </View>
+                  </View>
+                  <Text style={styles.username}>{dadosFicticios.nomeCompleto}</Text>
+                  <Text style={styles.membroDesde}>Membro desde 2023</Text>
+                </View>
+
+                {/* Seção de Dados Pessoais */}
+                <Text style={styles.sectionTitle}>Dados Pessoais</Text>
+                
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Email:</Text>
+                  <Text style={styles.infoValue}>{user?.email}</Text>
+                </View>
+                
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>CPF:</Text>
+                  <Text style={styles.infoValue}>{dadosFicticios.cpf}</Text>
+                </View>
+                
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Telefone:</Text>
+                  <Text style={styles.infoValue}>{dadosFicticios.telefone}</Text>
+                </View>
+                
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Nascimento:</Text>
+                  <Text style={styles.infoValue}>{dadosFicticios.dataNascimento}</Text>
+                </View>
+
+                {/* Seção de Endereço */}
+                <Text style={styles.sectionTitle}>Endereço</Text>
+                
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>CEP:</Text>
+                  <Text style={styles.infoValue}>{dadosFicticios.endereco.cep}</Text>
+                </View>
+                
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Rua:</Text>
+                  <Text style={styles.infoValue}>{dadosFicticios.endereco.rua}</Text>
+                </View>
+                
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Bairro:</Text>
+                  <Text style={styles.infoValue}>{dadosFicticios.endereco.bairro}</Text>
+                </View>
+                
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Cidade/UF:</Text>
+                  <Text style={styles.infoValue}>
+                    {dadosFicticios.endereco.cidade} - {dadosFicticios.endereco.estado}
+                  </Text>
+                </View>
+
+                {/* Botões de Ação */}
+                <TouchableOpacity
+                  style={editando ? styles.saveButton : styles.editButton}
+                  onPress={() => editando ? handleSubmit() : setEditando(true)}
+                >
+                  <Text style={styles.buttonText}>
+                    {editando ? 'Salvar alterações' : 'Editar perfil'}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.logoutButton}
+                  onPress={logout}
+                >
+                  <Text style={styles.buttonText}>Sair da conta</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </Formik>
+        </View>
+      </ScrollView>
+    </ImageBackground>
+  );
+}
+
+const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    padding: 20,
+  },
+  content: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 10,
+    padding: 20,
+    marginBottom: 20,
+  },
+  perfilHeader: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  fotoContainer: {
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    borderWidth: 3,
+    borderColor: '#6200ee',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  username: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#6200ee',
+    textAlign: 'center',
+  },
+  membroDesde: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#6200ee',
+    marginTop: 20,
+    marginBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+    paddingBottom: 5,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  infoLabel: {
+    fontWeight: '600',
+    color: '#333',
+    width: 100,
+  },
+  infoValue: {
+    flex: 1,
+    color: '#555',
+  },
+  input: {
+    height: 50,
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    marginBottom: 5,
+    fontSize: 16,
+    backgroundColor: '#fff',
+  },
+  inputError: {
+    borderColor: 'red',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginBottom: 10,
+  },
+  editButton: {
+    backgroundColor: '#6200ee',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  saveButton: {
+    backgroundColor: '#4CAF50',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  logoutButton: {
+    backgroundColor: '#f44336',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 15,
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+});
