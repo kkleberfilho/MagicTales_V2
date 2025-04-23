@@ -15,7 +15,6 @@ export default function PerfilScreen() {
   const [editando, setEditando] = useState(false);
   const { isAuthenticated, user, logout } = useAuth();
 
-  // Dados fictícios baseados no schema de cadastro
   const dadosFicticios = {
     nomeCompleto: "Ana Silva",
     telefone: "(11) 98765-4321",
@@ -63,7 +62,7 @@ export default function PerfilScreen() {
           >
             {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
               <>
-                {/* Cabeçalho do Perfil */}
+                
                 <View style={styles.perfilHeader}>
                   <View style={styles.fotoContainer}>
                     <View style={styles.avatar}>
@@ -74,7 +73,7 @@ export default function PerfilScreen() {
                   <Text style={styles.membroDesde}>Membro desde 2023</Text>
                 </View>
 
-                {/* Seção de Dados Pessoais */}
+               
                 <Text style={styles.sectionTitle}>Dados Pessoais</Text>
                 
                 <View style={styles.infoRow}>
@@ -97,7 +96,7 @@ export default function PerfilScreen() {
                   <Text style={styles.infoValue}>{dadosFicticios.dataNascimento}</Text>
                 </View>
 
-                {/* Seção de Endereço */}
+                
                 <Text style={styles.sectionTitle}>Endereço</Text>
                 
                 <View style={styles.infoRow}>
@@ -122,7 +121,7 @@ export default function PerfilScreen() {
                   </Text>
                 </View>
 
-                {/* Botões de Ação */}
+               
                 <TouchableOpacity
                   style={editando ? styles.saveButton : styles.editButton}
                   onPress={() => editando ? handleSubmit() : setEditando(true)}

@@ -2,9 +2,9 @@ import { View, Text, TextInput, TouchableOpacity, ImageBackground, StyleSheet, A
 import { Link, router } from 'expo-router';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { useAuth } from '@/contexts/AuthContext'; // Adicione esta importação
+import { useAuth } from '@/contexts/AuthContext'; 
 
-// Credenciais fixas
+
 const CREDENCIAIS_FIXAS = {
   email: 'usuario@exemplo.com',
   senha: 'senha123'
@@ -20,13 +20,13 @@ export default function LoginScreen() {
 
   const handleLogin = (values: { email: string, senha: string }) => {
     if (login(values.email, values.senha)) {
-      router.replace('/conto'); // Redireciona para conto após login
+      router.replace('/conto'); 
     } else {
       Alert.alert('Erro', 'Email ou senha incorretos');
     }
   };
 
-  // O restante do seu código permanece EXATAMENTE IGUAL
+
   return (
     <ImageBackground 
       source={require('@/assets/background2.jpg')} 
@@ -77,7 +77,7 @@ export default function LoginScreen() {
 
                <TouchableOpacity 
                   style={styles.button} 
-                  onPress={() => router.push('/')} // Navega para Home
+                  onPress={() => router.push('/')} 
                 >
                   <Text style={styles.buttonText}>Voltar</Text>
                 </TouchableOpacity>
@@ -93,7 +93,7 @@ export default function LoginScreen() {
   );
 }
 
-// Mantenha seus estilos EXATAMENTE COMO ESTÃO
+
 const styles = StyleSheet.create({
   background: {
     flex: 1,
