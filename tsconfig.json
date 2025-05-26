@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "types": ["@react-native-firebase/app"],
     "jsx": "react-native",
     "module": "esnext",
     "target": "esnext",

@@ -2,13 +2,8 @@ import { View, Text, TextInput, TouchableOpacity, ImageBackground, StyleSheet, A
 import { Link, router } from 'expo-router';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { useAuth } from '@/contexts/AuthContext'; 
+import { useAuth } from '@/contexts/AuthContext';
 
-
-const CREDENCIAIS_FIXAS = {
-  email: 'usuario@exemplo.com',
-  senha: 'senha123'
-};
 
 const LoginSchema = Yup.object().shape({
   email: Yup.string().email('Email inválido').required('Obrigatório'),
@@ -16,16 +11,16 @@ const LoginSchema = Yup.object().shape({
 });
 
 export default function LoginScreen() {
-  const { login } = useAuth();
+  const { login, loading } = useAuth();
 
-  const handleLogin = (values: { email: string, senha: string }) => {
-    if (login(values.email, values.senha)) {
-      router.replace('/conto'); 
+  const handleLogin = async (values: { email: string, senha: string }) => {
+    const success = await login(values.email, values.senha);
+    if (success) {
+      router.replace('/conto');
     } else {
       Alert.alert('Erro', 'Email ou senha incorretos');
     }
   };
-
 
   return (
     <ImageBackground 
@@ -71,20 +66,28 @@ export default function LoginScreen() {
               <TouchableOpacity 
                 style={styles.button} 
                 onPress={() => handleSubmit()}
+                disabled={loading}
               >
-                <Text style={styles.buttonText}>Entrar</Text>
+                <Text style={styles.buttonText}>
+                  {loading ? 'Carregando...' : 'Entrar'}
+                </Text>
               </TouchableOpacity>
 
-               <TouchableOpacity 
-                  style={styles.button} 
-                  onPress={() => router.push('/')} 
-                >
-                  <Text style={styles.buttonText}>Voltar</Text>
-                </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.button} 
+                onPress={() => router.push('/')} 
+              >
+                <Text style={styles.buttonText}>Voltar</Text>
+              </TouchableOpacity>
 
-              <Text style={styles.credenciaisTexto}>
-                Use: {CREDENCIAIS_FIXAS.email} / {CREDENCIAIS_FIXAS.senha}
-              </Text>
+              <View style={styles.footer}>
+                <Text style={styles.footerText}>Não tem uma conta?</Text>
+                <Link href="/cadastro" asChild>
+                  <TouchableOpacity>
+                    <Text style={styles.footerLink}>Cadastre-se</Text>
+                  </TouchableOpacity>
+                </Link>
+              </View>
             </View>
           )}
         </Formik>
@@ -92,7 +95,6 @@ export default function LoginScreen() {
     </ImageBackground>
   );
 }
-
 
 const styles = StyleSheet.create({
   background: {
@@ -148,10 +150,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginBottom: 10,
   },
-  credenciaisTexto: {
+  footer: {
     marginTop: 20,
-    textAlign: 'center',
+    alignItems: 'center',
+  },
+  footerText: {
     color: '#666',
-    fontSize: 12,
+  },
+  footerLink: {
+    color: '#6200ee',
+    fontWeight: 'bold',
+    marginTop: 5,
   },
 });

@@ -67,6 +67,7 @@ export default function ContoScreen() {
         <Ionicons name="person" size={24} color="#6200ee" />
       </TouchableOpacity>
 
+  
       
       <View style={styles.compactContainer}>
         <Text style={styles.title}>Escolha seu Conto</Text>
@@ -117,6 +118,15 @@ export default function ContoScreen() {
             />
           ))}
         </View>
+
+        <TouchableOpacity 
+          style={styles.planoButton}
+          onPress={() => router.push('/planos')}
+        >
+          <Text style={styles.planoButtonText}>VER PLANOS</Text>
+        </TouchableOpacity>
+
+
       </View>
     </ImageBackground>
   );
@@ -224,5 +234,18 @@ const styles = StyleSheet.create({
   },
   activeIndicator: {
     backgroundColor: '#6200ee',
+  },
+  planoButton: {
+    backgroundColor: '#6200ee',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 20,
+    marginHorizontal: 20,
+  },
+  planoButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });

@@ -1,41 +1,14 @@
 import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, ImageBackground, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ImageBackground, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { Link, router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
+import { CadastroSchema } from '@/schemas/CadastroSchema';
 
-const CadastroSchema = Yup.object().shape({
-  nomeCompleto: Yup.string().required('Nome completo é obrigatório'),
-  email: Yup.string().email('Email inválido').required('Email é obrigatório'),
-  senha: Yup.string()
-    .min(8, 'A senha deve ter no mínimo 8 caracteres')
-    .required('Senha é obrigatória'),
-  confirmarSenha: Yup.string()
-    .oneOf([Yup.ref('senha')], 'As senhas não coincidem')
-    .required('Confirmação de senha é obrigatória'),
-  dataNascimento: Yup.date()
-    .max(new Date(), 'Data não pode ser no futuro')
-    .required('Data de nascimento é obrigatória'),
-  cpf: Yup.string()
-    .matches(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/, 'CPF inválido')
-    .required('CPF é obrigatório'),
-  telefone: Yup.string()
-    .matches(/^\(\d{2}\) \d{4,5}-\d{4}$/, 'Telefone inválido')
-    .required('Telefone é obrigatório'),
-  endereco: Yup.object().shape({
-    cep: Yup.string().matches(/^\d{5}-\d{3}$/, 'CEP inválido'),
-    rua: Yup.string().required('Rua é obrigatória'),
-    numero: Yup.string().required('Número é obrigatório'),
-    complemento: Yup.string(),
-    bairro: Yup.string().required('Bairro é obrigatório'),
-    cidade: Yup.string().required('Cidade é obrigatória'),
-    estado: Yup.string().required('Estado é obrigatório'),
-  })
-});
 
 export default function CadastroScreen() {
-  const { login } = useAuth();
+  const { register } = useAuth();
 
   const formatarCPF = (text: string) => {
     return text
@@ -59,16 +32,45 @@ export default function CadastroScreen() {
       .replace(/(-\d{3})\d+?$/, '$1');
   };
 
-  const handleCadastro = (values: any) => {
-    console.log('Dados do cadastro:', values);
-    login(values.email, values.senha);
+  // Conversão da data no formato DD/MM/AAAA para ISO (YYYY-MM-DD) antes de enviar
+  const converterDataParaISO = (data: string) => {
+    const [dia, mes, ano] = data.split('/');
+    if (!dia || !mes || !ano) return '';
+    return `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
   };
 
+  const handleCadastro = async (values: any) => {
+    // Converter dataNascimento para ISO antes de enviar
+    const dataNascimentoISO = converterDataParaISO(values.dataNascimento);
+    if (!dataNascimentoISO) {
+      Alert.alert('Erro', 'Data de nascimento inválida');
+      return;
+    }
+
+    const userData = {
+      nomeCompleto: values.nomeCompleto,
+      email: values.email,
+      dataNascimento: dataNascimentoISO,
+      cpf: values.cpf,
+      telefone: values.telefone,
+      endereco: values.endereco
+    };
+
+    const success = await register(userData, values.senha);
+    if (success) {
+      Alert.alert(
+        'Cadastro realizado!',
+        'Verifique seu email para confirmar sua conta.'
+      );
+      router.replace('/login');
+    } else {
+      Alert.alert('Erro', 'Falha ao cadastrar. Tente novamente.');
+    }
+  };
 
   return (
-    
-    <ImageBackground 
-      source={require('@/assets/background2.jpg')} 
+    <ImageBackground
+      source={require('@/assets/background2.jpg')}
       style={styles.background}
       resizeMode="cover"
     >
@@ -76,11 +78,10 @@ export default function CadastroScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
       >
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          
+        <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
           <View style={styles.content}>
             <Text style={styles.title}>Crie sua conta</Text>
-            
+
             <Formik
               initialValues={{
                 nomeCompleto: '',
@@ -105,9 +106,8 @@ export default function CadastroScreen() {
             >
               {({ handleChange, handleBlur, handleSubmit, values, errors, touched, setFieldValue }) => (
                 <>
-                
                   <Text style={styles.sectionTitle}>Dados Pessoais</Text>
-                  
+
                   <Text style={styles.label}>Nome Completo</Text>
                   <TextInput
                     style={styles.input}
@@ -115,6 +115,7 @@ export default function CadastroScreen() {
                     onChangeText={handleChange('nomeCompleto')}
                     onBlur={handleBlur('nomeCompleto')}
                     value={values.nomeCompleto}
+                    autoCapitalize="words"
                   />
                   {touched.nomeCompleto && errors.nomeCompleto && (
                     <Text style={styles.errorText}>{errors.nomeCompleto}</Text>
@@ -124,10 +125,17 @@ export default function CadastroScreen() {
                   <TextInput
                     style={styles.input}
                     placeholder="DD/MM/AAAA"
-                    onChangeText={handleChange('dataNascimento')}
+                    onChangeText={(text) => {
+                      // Formatar data para o padrão DD/MM/AAAA manualmente
+                      let formatted = text.replace(/\D/g, '');
+                      if (formatted.length > 2) formatted = formatted.slice(0,2) + '/' + formatted.slice(2);
+                      if (formatted.length > 5) formatted = formatted.slice(0,5) + '/' + formatted.slice(5,9);
+                      setFieldValue('dataNascimento', formatted);
+                    }}
                     onBlur={handleBlur('dataNascimento')}
                     value={values.dataNascimento}
                     keyboardType="numeric"
+                    maxLength={10}
                   />
                   {touched.dataNascimento && errors.dataNascimento && (
                     <Text style={styles.errorText}>{errors.dataNascimento}</Text>
@@ -141,6 +149,7 @@ export default function CadastroScreen() {
                     onBlur={handleBlur('cpf')}
                     value={values.cpf}
                     keyboardType="numeric"
+                    maxLength={14}
                   />
                   {touched.cpf && errors.cpf && (
                     <Text style={styles.errorText}>{errors.cpf}</Text>
@@ -154,14 +163,14 @@ export default function CadastroScreen() {
                     onBlur={handleBlur('telefone')}
                     value={values.telefone}
                     keyboardType="phone-pad"
+                    maxLength={15}
                   />
                   {touched.telefone && errors.telefone && (
                     <Text style={styles.errorText}>{errors.telefone}</Text>
                   )}
 
-                 
                   <Text style={styles.sectionTitle}>Dados de Acesso</Text>
-                  
+
                   <Text style={styles.label}>Email</Text>
                   <TextInput
                     style={styles.input}
@@ -171,6 +180,7 @@ export default function CadastroScreen() {
                     value={values.email}
                     keyboardType="email-address"
                     autoCapitalize="none"
+                    autoCorrect={false}
                   />
                   {touched.email && errors.email && (
                     <Text style={styles.errorText}>{errors.email}</Text>
@@ -202,9 +212,8 @@ export default function CadastroScreen() {
                     <Text style={styles.errorText}>{errors.confirmarSenha}</Text>
                   )}
 
-                  
                   <Text style={styles.sectionTitle}>Endereço</Text>
-                  
+
                   <Text style={styles.label}>CEP</Text>
                   <TextInput
                     style={styles.input}
@@ -213,6 +222,7 @@ export default function CadastroScreen() {
                     onBlur={handleBlur('endereco.cep')}
                     value={values.endereco.cep}
                     keyboardType="numeric"
+                    maxLength={9}
                   />
                   {touched.endereco?.cep && errors.endereco?.cep && (
                     <Text style={styles.errorText}>{errors.endereco.cep}</Text>
@@ -233,10 +243,10 @@ export default function CadastroScreen() {
                       )}
                     </View>
                     <View style={[styles.column, { flex: 1, marginLeft: 10 }]}>
-                      <Text style={styles.label}>Nº</Text>
+                      <Text style={styles.label}>Número</Text>
                       <TextInput
                         style={styles.input}
-                        placeholder="Número"
+                        placeholder="Nº"
                         onChangeText={handleChange('endereco.numero')}
                         onBlur={handleBlur('endereco.numero')}
                         value={values.endereco.numero}
@@ -251,7 +261,7 @@ export default function CadastroScreen() {
                   <Text style={styles.label}>Complemento</Text>
                   <TextInput
                     style={styles.input}
-                    placeholder="Apto, bloco, etc."
+                    placeholder="Complemento (opcional)"
                     onChangeText={handleChange('endereco.complemento')}
                     onBlur={handleBlur('endereco.complemento')}
                     value={values.endereco.complemento}
@@ -260,7 +270,7 @@ export default function CadastroScreen() {
                   <Text style={styles.label}>Bairro</Text>
                   <TextInput
                     style={styles.input}
-                    placeholder="Nome do bairro"
+                    placeholder="Bairro"
                     onChangeText={handleChange('endereco.bairro')}
                     onBlur={handleBlur('endereco.bairro')}
                     value={values.endereco.bairro}
@@ -269,58 +279,47 @@ export default function CadastroScreen() {
                     <Text style={styles.errorText}>{errors.endereco.bairro}</Text>
                   )}
 
-                  <View style={styles.row}>
-                    <View style={[styles.column, { flex: 3 }]}>
-                      <Text style={styles.label}>Cidade</Text>
-                      <TextInput
-                        style={styles.input}
-                        placeholder="Nome da cidade"
-                        onChangeText={handleChange('endereco.cidade')}
-                        onBlur={handleBlur('endereco.cidade')}
-                        value={values.endereco.cidade}
-                      />
-                      {touched.endereco?.cidade && errors.endereco?.cidade && (
-                        <Text style={styles.errorText}>{errors.endereco.cidade}</Text>
-                      )}
-                    </View>
-                    <View style={[styles.column, { flex: 1, marginLeft: 10 }]}>
-                      <Text style={styles.label}>UF</Text>
-                      <TextInput
-                        style={styles.input}
-                        placeholder="UF"
-                        onChangeText={handleChange('endereco.estado')}
-                        onBlur={handleBlur('endereco.estado')}
-                        value={values.endereco.estado}
-                        maxLength={2}
-                      />
-                      {touched.endereco?.estado && errors.endereco?.estado && (
-                        <Text style={styles.errorText}>{errors.endereco.estado}</Text>
-                      )}
-                    </View>
-                  </View>
+                  <Text style={styles.label}>Cidade</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Cidade"
+                    onChangeText={handleChange('endereco.cidade')}
+                    onBlur={handleBlur('endereco.cidade')}
+                    value={values.endereco.cidade}
+                  />
+                  {touched.endereco?.cidade && errors.endereco?.cidade && (
+                    <Text style={styles.errorText}>{errors.endereco.cidade}</Text>
+                  )}
 
-                  <TouchableOpacity 
-                    style={styles.button} 
+                  <Text style={styles.label}>Estado (UF)</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="UF"
+                    onChangeText={(text) => setFieldValue('endereco.estado', text.toUpperCase())}
+                    onBlur={handleBlur('endereco.estado')}
+                    value={values.endereco.estado}
+                    maxLength={2}
+                    autoCapitalize="characters"
+                  />
+                  {touched.endereco?.estado && errors.endereco?.estado && (
+                    <Text style={styles.errorText}>{errors.endereco.estado}</Text>
+                  )}
+
+                  <TouchableOpacity
+                    style={styles.button}
                     onPress={() => handleSubmit()}
                   >
                     <Text style={styles.buttonText}>Cadastrar</Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity 
-                    style={styles.button} 
-                    onPress={() => router.push('/')} 
+                  <TouchableOpacity
+                    onPress={() => router.back()}
+                    style={{ marginTop: 20, alignItems: 'center' }}
                   >
-                    <Text style={styles.buttonText}>Voltar</Text>
+                    <Text style={{ color: '#fff', textDecorationLine: 'underline' }}>
+                      Já tem conta? Fazer login
+                    </Text>
                   </TouchableOpacity>
-
-                  <View style={styles.loginContainer}>
-                    <Text style={styles.loginText}>Já tem uma conta?</Text>
-                    <Link href="/login" asChild>
-                      <TouchableOpacity>
-                        <Text style={styles.loginLink}>Faça login</Text>
-                      </TouchableOpacity>
-                    </Link>
-                  </View>
                 </>
               )}
             </Formik>
@@ -334,90 +333,68 @@ export default function CadastroScreen() {
 const styles = StyleSheet.create({
   background: {
     flex: 1,
-    width: '100%',
-    height: '100%',
+    justifyContent: 'center',
   },
   container: {
     flex: 1,
   },
   scrollContainer: {
-    flexGrow: 1,
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
   },
   content: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 10,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 15,
     padding: 20,
-    marginBottom: 20,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#6200ee',
+    color: '#fff',
+    marginBottom: 15,
     textAlign: 'center',
-    marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#6200ee',
-    marginTop: 15,
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#fff',
+    marginTop: 20,
     marginBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-    paddingBottom: 5,
   },
   label: {
-    fontSize: 14,
-    color: '#333',
+    color: '#fff',
     marginBottom: 5,
     fontWeight: '500',
   },
   input: {
-    height: 50,
-    borderColor: '#ddd',
-    borderWidth: 1,
+    backgroundColor: '#fff',
     borderRadius: 8,
-    paddingHorizontal: 15,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     marginBottom: 10,
     fontSize: 16,
-    backgroundColor: '#fff',
   },
   errorText: {
-    color: 'red',
-    fontSize: 12,
+    color: 'yellow',
     marginBottom: 10,
+  },
+  button: {
+    backgroundColor: '#1f6f8b',
+    paddingVertical: 15,
+    borderRadius: 12,
+    marginTop: 15,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 18,
+    textAlign: 'center',
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   column: {
-    flexDirection: 'column',
-  },
-  button: {
-    backgroundColor: '#6200ee',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  loginContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 15,
-  },
-  loginText: {
-    color: '#666',
-    marginRight: 5,
-  },
-  loginLink: {
-    color: '#6200ee',
-    fontWeight: 'bold',
-  },
+    flex: 1,
+  }
 });

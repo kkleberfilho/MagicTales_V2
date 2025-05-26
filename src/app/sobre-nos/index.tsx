@@ -22,7 +22,7 @@ export default function SobreScreen() {
             O MagicTales é um aplicativo desenvolvido para amantes de histórias...
           </Text>
           
-          {/* Restante do conteúdo */}
+          
         </View>
       </ScrollView>
     </ImageBackground>
