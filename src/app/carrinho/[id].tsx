@@ -10,14 +10,14 @@ type Plano = {
 const CarrinhoScreen = () => {
   const { id } = useLocalSearchParams();
   
-  // Defina os planos com tipo explícito para evitar erros
+ 
   const planos: Record<string, Plano> = {
     "1": { nome: "Premium", preco: 19.99 },
     "2": { nome: "Padrão", preco: 9.99 },
     "3": { nome: "Básico com anúncios", preco: 4.99 }
   };
 
-  // Verifique se o ID é válido antes de acessar
+
   const plano = id && typeof id === 'string' ? planos[id] : planos["1"];
 
   return (

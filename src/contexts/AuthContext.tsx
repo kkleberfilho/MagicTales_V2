@@ -1,10 +1,10 @@
-// src/contexts/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendEmailVerification, User } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import { router } from 'expo-router';
 import { firebaseAuth, firebaseFirestore } from '@/config/firebaseConfig';
+import { validarCPF } from '@/utils/cpfValidator';
 
 interface UserAddress {
   cep: string;
@@ -76,7 +76,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userDoc = await getDoc(doc(firebaseFirestore, 'usuarios', userCredential.user.uid));
       if (userDoc.exists()) {
         setUserData(userDoc.data() as UserData);
-
         console.log('Dados do usuário:', userDoc.data());
       }
 
@@ -92,28 +91,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = async (userData: UserData, password: string) => {
     try {
-      const userCredential = await createUserWithEmailAndPassword(firebaseAuth, userData.email, password);
+      // 1. Primeiro verifica se CPF já existe
+      const cpfQuery = await getDocs(
+        query(
+          collection(firebaseFirestore, 'usuarios'),
+          where('cpf', '==', userData.cpf.replace(/\D/g, ''))
+        )
+      );
 
-      console.log('Usuário cadastrado:', userCredential.user.uid);
+      // 2. Verifica se email já existe
+      const emailQuery = await getDocs(
+        query(
+          collection(firebaseFirestore, 'usuarios'),
+          where('email', '==', userData.email)
+        )
+      );
 
+      if (!cpfQuery.empty) {
+        throw new Error('CPF já cadastrado');
+      }
+
+      if (!emailQuery.empty) {
+        throw new Error('Email já cadastrado');
+      }
+
+      // 3. Cria usuário no Authentication
+      const userCredential = await createUserWithEmailAndPassword(
+        firebaseAuth, 
+        userData.email, 
+        password
+      );
+
+      // 4. Agora cria no Firestore (com usuário autenticado)
       await setDoc(doc(firebaseFirestore, 'usuarios', userCredential.user.uid), {
         ...userData,
+        cpf: userData.cpf.replace(/\D/g, ''),
+        telefone: userData.telefone.replace(/\D/g, ''),
         tipoConta: 'free',
         dataCadastro: serverTimestamp(),
       });
 
-      console.log('Dados do usuário salvos no Firestore.');
-
-      setUser(userCredential.user);
-      setUserData(userData);
-      setIsAuthenticated(true);
       return true;
     } catch (error: any) {
       console.error("Erro no cadastro:", error);
-      Alert.alert('Erro', 'Falha no cadastro: ' + error.message);
+      Alert.alert('Erro', error.message || 'Falha no cadastro');
       return false;
     }
   };
+
 
   const logout = async () => {
     try {

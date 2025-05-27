@@ -1,14 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ImageBackground, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { Link, router } from 'expo-router';
-import { useAuth } from '@/contexts/AuthContext';
+import { router } from 'expo-router';
+import { authService } from '@/services/authService';
 import { CadastroSchema } from '@/schemas/CadastroSchema';
 
-
 export default function CadastroScreen() {
-  const { register } = useAuth();
+  const [loading, setLoading] = useState(false);
 
   const formatarCPF = (text: string) => {
     return text
@@ -32,7 +31,6 @@ export default function CadastroScreen() {
       .replace(/(-\d{3})\d+?$/, '$1');
   };
 
-  // Conversão da data no formato DD/MM/AAAA para ISO (YYYY-MM-DD) antes de enviar
   const converterDataParaISO = (data: string) => {
     const [dia, mes, ano] = data.split('/');
     if (!dia || !mes || !ano) return '';
@@ -40,31 +38,42 @@ export default function CadastroScreen() {
   };
 
   const handleCadastro = async (values: any) => {
-    // Converter dataNascimento para ISO antes de enviar
-    const dataNascimentoISO = converterDataParaISO(values.dataNascimento);
-    if (!dataNascimentoISO) {
-      Alert.alert('Erro', 'Data de nascimento inválida');
-      return;
-    }
+    setLoading(true);
+    
+    try {
+      const dataNascimentoISO = converterDataParaISO(values.dataNascimento);
+      if (!dataNascimentoISO) {
+        throw new Error('Data de nascimento inválida');
+      }
 
-    const userData = {
-      nomeCompleto: values.nomeCompleto,
-      email: values.email,
-      dataNascimento: dataNascimentoISO,
-      cpf: values.cpf,
-      telefone: values.telefone,
-      endereco: values.endereco
-    };
+      const userData = {
+        nomeCompleto: values.nomeCompleto,
+        email: values.email,
+        dataNascimento: dataNascimentoISO,
+        cpf: values.cpf.replace(/\D/g, ''),
+        telefone: values.telefone.replace(/\D/g, ''),
+        endereco: {
+          cep: values.endereco.cep.replace(/\D/g, ''),
+          rua: values.endereco.rua,
+          numero: values.endereco.numero,
+          complemento: values.endereco.complemento || '',
+          bairro: values.endereco.bairro,
+          cidade: values.endereco.cidade,
+          estado: values.endereco.estado.toUpperCase()
+        }
+      };
 
-    const success = await register(userData, values.senha);
-    if (success) {
+      await authService.register(userData, values.senha);
+      
       Alert.alert(
         'Cadastro realizado!',
         'Verifique seu email para confirmar sua conta.'
       );
       router.replace('/login');
-    } else {
-      Alert.alert('Erro', 'Falha ao cadastrar. Tente novamente.');
+    } catch (error: any) {
+      Alert.alert('Erro', error.message || 'Falha no cadastro. Tente novamente.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -126,7 +135,6 @@ export default function CadastroScreen() {
                     style={styles.input}
                     placeholder="DD/MM/AAAA"
                     onChangeText={(text) => {
-                      // Formatar data para o padrão DD/MM/AAAA manualmente
                       let formatted = text.replace(/\D/g, '');
                       if (formatted.length > 2) formatted = formatted.slice(0,2) + '/' + formatted.slice(2);
                       if (formatted.length > 5) formatted = formatted.slice(0,5) + '/' + formatted.slice(5,9);
@@ -306,10 +314,13 @@ export default function CadastroScreen() {
                   )}
 
                   <TouchableOpacity
-                    style={styles.button}
+                    style={[styles.button, loading && styles.buttonDisabled]}
                     onPress={() => handleSubmit()}
+                    disabled={loading}
                   >
-                    <Text style={styles.buttonText}>Cadastrar</Text>
+                    <Text style={styles.buttonText}>
+                      {loading ? 'Cadastrando...' : 'Cadastrar'}
+                    </Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -383,6 +394,9 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     borderRadius: 12,
     marginTop: 15,
+  },
+  buttonDisabled: {
+    backgroundColor: '#cccccc',
   },
   buttonText: {
     color: '#fff',

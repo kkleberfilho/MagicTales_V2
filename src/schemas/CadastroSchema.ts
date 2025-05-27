@@ -1,4 +1,5 @@
 import * as Yup from 'yup';
+import { validarCPF } from '@/utils/cpfValidator';
 
 export const CadastroSchema = Yup.object().shape({
   nomeCompleto: Yup.string()
@@ -36,8 +37,11 @@ export const CadastroSchema = Yup.object().shape({
     )
     .required('Data de nascimento é obrigatória'),
 
-  cpf: Yup.string()
+    cpf: Yup.string()
     .matches(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/, 'CPF inválido')
+    .test('cpf-valido', 'CPF inválido', (value) => {
+      return validarCPF(value || '');
+    })
     .required('CPF é obrigatório'),
 
   telefone: Yup.string()
