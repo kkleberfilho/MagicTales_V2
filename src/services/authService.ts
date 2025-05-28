@@ -41,6 +41,12 @@ export interface UserData {
   dataCadastro?: any;
 }
 
+export interface Conto {
+  id: number;
+  titulo: string;
+  descricao: string;
+}
+
 export const authService = {
   // Observador de estado de autenticação
   onAuthStateChanged: (callback: (user: User | null) => void) => {
@@ -156,7 +162,7 @@ export const authService = {
     }
   },
 
-updateUserData: async (userId: string, data: Partial<UserData>) => {
+  updateUserData: async (userId: string, data: Partial<UserData>) => {
     try {
       const userRef = doc(firebaseFirestore, "usuarios", userId);
       await updateDoc(userRef, data);
@@ -164,7 +170,28 @@ updateUserData: async (userId: string, data: Partial<UserData>) => {
       console.error("Erro ao atualizar dados do usuário:", error);
       throw error;
     }
-  }
+  },
 
+  // Buscar contos do Firestore
+  getContos: async (): Promise<Conto[]> => {
+    try {
+      const contosCollection = collection(firebaseFirestore, 'contos');
+      const querySnapshot = await getDocs(contosCollection);
+      const contosList: Conto[] = [];
 
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        contosList.push({
+          id: data.id,
+          titulo: data.titulo,
+          descricao: data.descricao,
+        });
+      });
+
+      return contosList;
+    } catch (error) {
+      console.error("Erro ao buscar contos:", error);
+      throw error;
+    }
+  },
 };

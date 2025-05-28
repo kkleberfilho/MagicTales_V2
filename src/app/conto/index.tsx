@@ -1,11 +1,12 @@
 import { Text, View, StyleSheet, ActivityIndicator, ImageBackground, Dimensions, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { Redirect, router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { authService, Conto } from '@/services/authService';
 
 const { width: screenWidth } = Dimensions.get('window');
-const CARD_WIDTH = screenWidth * 0.7; 
+const CARD_WIDTH = screenWidth * 0.7;
 const CARD_MARGIN = 10;
 const CARD_TOTAL_WIDTH = CARD_WIDTH + CARD_MARGIN * 2;
 
@@ -13,33 +14,35 @@ export default function ContoScreen() {
   const { isAuthenticated } = useAuth();
   const scrollViewRef = useRef<ScrollView>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [contos, setContos] = useState<Conto[] | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const contos = [
-    {
-      id: 1,
-      title: "A Floresta Encantada",
-      description: "Uma aventura mágica pela floresta onde animais falam e árvores escondem segredos.",
-      image: require('@/assets/conto1.jpg')
-    },
-    {
-      id: 2,
-      title: "O Castelo do Tempo",
-      description: "Viaje no tempo para desvendar os mistérios de um castelo que existe em todas as eras.",
-      image: require('@/assets/conto2.jpg')
-    },
-    {
-      id: 3,
-      title: "A Ilha Perdida",
-      description: "Explore uma ilha misteriosa onde a geografia muda a cada lua cheia.",
-      image: require('@/assets/conto3.jpg')
-    }
-  ];
+  // Corrigido: Tipagem explícita do índice numérico
+  const imagesMap: { [key: number]: any } = {
+    1: require('@/assets/conto1.jpg'),
+    2: require('@/assets/conto2.jpg'),
+    3: require('@/assets/conto3.jpg'),
+  };
+
+  useEffect(() => {
+    const fetchContos = async () => {
+      try {
+        const fetchedContos = await authService.getContos();
+        setContos(fetchedContos);
+      } catch (error) {
+        console.error("Erro ao carregar contos:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchContos();
+  }, []);
 
   if (isAuthenticated === false) {
     return <Redirect href="/login" />;
   }
 
-  if (isAuthenticated === null) {
+  if (isAuthenticated === null || loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" />
@@ -53,13 +56,20 @@ export default function ContoScreen() {
     setActiveIndex(newIndex);
   };
 
+  if (!contos || contos.length === 0) {
+    return (
+      <View style={styles.background}>
+        <Text style={{ textAlign: 'center', marginTop: 50 }}>Nenhum conto disponível.</Text>
+      </View>
+    );
+  }
+
   return (
     <ImageBackground 
       source={require('@/assets/background2.jpg')} 
       style={styles.background}
       resizeMode="cover"
     >
-      
       <TouchableOpacity 
         style={styles.profileButton}
         onPress={() => router.push('/perfil')}
@@ -67,10 +77,7 @@ export default function ContoScreen() {
         <Ionicons name="person" size={24} color="#6200ee" />
       </TouchableOpacity>
 
-  
-      
       <View style={styles.compactContainer}>
-        <Text style={styles.title}>Escolha seu Conto</Text>
         
         <ScrollView
           ref={scrollViewRef}
@@ -83,19 +90,18 @@ export default function ContoScreen() {
         >
           {contos.map((conto) => (
             <View key={conto.id} style={styles.card}>
-              <Image source={conto.image} style={styles.cardImage} />
+              <Image source={imagesMap[conto.id]} style={styles.cardImage} />
               <View style={styles.cardContent}>
-                <Text style={styles.cardTitle}>{conto.title}</Text>
-                <Text style={styles.cardDescription}>{conto.description}</Text>
+                <Text style={styles.cardTitle}>{conto.titulo}</Text>
+                <Text style={styles.cardDescription}>{conto.descricao}</Text>
                 <TouchableOpacity 
                   style={styles.cardButton}
                   onPress={() => router.push({
                     pathname: "/conto-detalhes",
                     params: { 
                       contoId: conto.id,
-                      titulo: conto.title,
-                      imagem: conto.image,
-                      descricao: conto.description 
+                      titulo: conto.titulo,
+                      descricao: conto.descricao 
                     }
                   })}
                 >
@@ -106,7 +112,6 @@ export default function ContoScreen() {
           ))}
         </ScrollView>
 
-        
         <View style={styles.indicatorsContainer}>
           {contos.map((_, index) => (
             <View 
@@ -125,110 +130,86 @@ export default function ContoScreen() {
         >
           <Text style={styles.planoButtonText}>VER PLANOS</Text>
         </TouchableOpacity>
-
-
       </View>
     </ImageBackground>
   );
 }
 
-
 const styles = StyleSheet.create({
   background: {
     flex: 1,
-    width: '100%',
-    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  
   compactContainer: {
     flex: 1,
-    justifyContent: 'center',
-    top: 70,
-    backgroundColor: 'rgba(255, 255, 255, 0.80)',
-    margin: 12, 
-    borderRadius: 10,
-    padding: 16, 
-    marginTop: 60,
-    maxHeight: '70%', 
+    marginTop: 80,
+    maxWidth: 400,
+    width: '100%',
+    justifyContent: 'space-between',
   },
   title: {
-    fontSize: 22, 
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#6200ee',
-    marginBottom: 20, 
     textAlign: 'center',
-  },
-  profileButton: {
-    position: 'absolute',
-    top: 40,
-    right: 20,
-    width: 60,
-    height: 60,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    zIndex: 1,
+    marginBottom: 10,
   },
   carouselContainer: {
-    alignItems: 'center',
+    paddingHorizontal: CARD_MARGIN,
   },
   card: {
     width: CARD_WIDTH,
     marginHorizontal: CARD_MARGIN,
     backgroundColor: 'white',
-    borderRadius: 10,
-    overflow: 'hidden',
+    borderRadius: 12,
+    padding: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
     elevation: 5,
-    marginBottom: 10, 
   },
   cardImage: {
     width: '100%',
-    height: CARD_WIDTH * 0.6, 
-    resizeMode: 'cover',
+    height: 160,
+    borderRadius: 12,
+    marginBottom: 10,
   },
   cardContent: {
-    padding: 15,
+    flex: 1,
   },
   cardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#6200ee',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   cardDescription: {
     fontSize: 14,
-    color: '#555',
-    marginBottom: 15,
+    color: '#333',
+    marginBottom: 10,
   },
   cardButton: {
+    marginTop: 'auto',
     backgroundColor: '#6200ee',
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
+    paddingVertical: 8,
+    borderRadius: 8,
   },
   cardButtonText: {
     color: 'white',
     fontWeight: 'bold',
+    textAlign: 'center',
   },
   indicatorsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 20,
+    marginTop: 10,
+    marginBottom: 20,
   },
   indicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: '#ccc',
     marginHorizontal: 4,
   },
@@ -236,16 +217,28 @@ const styles = StyleSheet.create({
     backgroundColor: '#6200ee',
   },
   planoButton: {
-    backgroundColor: '#6200ee',
-    padding: 15,
+    backgroundColor: '#fff',
+    borderColor: '#6200ee',
+    borderWidth: 2,
     borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 20,
+    paddingVertical: 10,
     marginHorizontal: 20,
+    marginBottom: 30,
   },
   planoButtonText: {
-    color: 'white',
+    textAlign: 'center',
+    color: '#6200ee',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  profileButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    zIndex: 10,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 8,
+    elevation: 4,
   },
 });
