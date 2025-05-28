@@ -1,23 +1,6 @@
 // src/services/authService.ts
-import {
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  sendEmailVerification,
-  User,
-} from 'firebase/auth';
-import {
-  doc,
-  getDoc,
-  setDoc,
-  serverTimestamp,
-  collection,
-  query,
-  where,
-  getDocs,
-  updateDoc,
-} from 'firebase/firestore';
+import {onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword,signOut,sendEmailVerification, User,} from 'firebase/auth';
+import {doc,getDoc,setDoc,serverTimestamp,collection,query,where,getDocs,updateDoc,} from 'firebase/firestore';
 import { firebaseAuth, firebaseFirestore } from '@/config/firebaseConfig';
 
 export interface UserAddress {
@@ -42,9 +25,10 @@ export interface UserData {
 }
 
 export interface Conto {
-  id: number;
+  id: string;
   titulo: string;
   descricao: string;
+  conteudo: string;
 }
 
 export const authService = {
@@ -185,6 +169,7 @@ export const authService = {
           id: data.id,
           titulo: data.titulo,
           descricao: data.descricao,
+          conteudo: data.conteudo
         });
       });
 

@@ -4,11 +4,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRef, useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { authService, Conto } from '@/services/authService';
+import NetInfo, { useNetInfo } from '@react-native-community/netinfo';
 
 const { width: screenWidth } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth * 0.7;
 const CARD_MARGIN = 10;
 const CARD_TOTAL_WIDTH = CARD_WIDTH + CARD_MARGIN * 2;
+
+
 
 export default function ContoScreen() {
   const { isAuthenticated } = useAuth();
@@ -16,9 +19,10 @@ export default function ContoScreen() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [contos, setContos] = useState<Conto[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const netInfo = useNetInfo();
 
   // Corrigido: Tipagem explícita do índice numérico
-  const imagesMap: { [key: number]: any } = {
+  const imagesMap: { [key: string]: any } = {
     1: require('@/assets/conto1.jpg'),
     2: require('@/assets/conto2.jpg'),
     3: require('@/assets/conto3.jpg'),
@@ -41,15 +45,6 @@ export default function ContoScreen() {
   if (isAuthenticated === false) {
     return <Redirect href="/login" />;
   }
-
-  if (isAuthenticated === null || loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
-  }
-
   const handleScroll = (event: any) => {
     const contentOffsetX = event.nativeEvent.contentOffset.x;
     const newIndex = Math.round(contentOffsetX / CARD_TOTAL_WIDTH);
@@ -76,6 +71,13 @@ export default function ContoScreen() {
       >
         <Ionicons name="person" size={24} color="#6200ee" />
       </TouchableOpacity>
+      
+
+      {!netInfo.isConnected && (
+        <View>
+          <Text>Conecte-se à internet para carregar os contos</Text>
+        </View>
+      )}
 
       <View style={styles.compactContainer}>
         
@@ -101,7 +103,8 @@ export default function ContoScreen() {
                     params: { 
                       contoId: conto.id,
                       titulo: conto.titulo,
-                      descricao: conto.descricao 
+                      descricao: conto.descricao,
+                      conteudo: conto.conteudo 
                     }
                   })}
                 >
